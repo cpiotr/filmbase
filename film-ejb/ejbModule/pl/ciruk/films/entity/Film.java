@@ -58,40 +58,47 @@ public class Film extends BaseEntity {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result
-				+ Objects.hashCode(insertionDate, label, title, getType());
-		
+		result = prime * result + ((label == null) ? 0 : label.hashCode());
+		result = prime * result + ((title == null) ? 0 : title.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
 	}
 
+
+
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (!super.equals(obj)) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (!(obj instanceof Film)) {
 			return false;
+		}
 		Film other = (Film) obj;
-		if (insertionDate == null) {
-			if (other.insertionDate != null)
-				return false;
-		} else if (!insertionDate.equals(other.insertionDate))
-			return false;
 		if (label == null) {
-			if (other.label != null)
+			if (other.label != null) {
 				return false;
-		} else if (!label.equals(other.label))
+			}
+		} else if (!label.equals(other.label)) {
 			return false;
+		}
 		if (title == null) {
-			if (other.title != null)
+			if (other.title != null) {
 				return false;
-		} else if (!title.equals(other.title))
+			}
+		} else if (!title.equals(other.title)) {
 			return false;
-		if (getType() != other.getType())
+		}
+		if (type != other.type) {
 			return false;
+		}
 		return true;
 	}
+
+
 
 	public String getTitle() {
 		return title;

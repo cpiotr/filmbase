@@ -38,18 +38,23 @@ public class User extends BaseEntity {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (!super.equals(obj)) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (!(obj instanceof User)) {
 			return false;
+		}
 		User other = (User) obj;
 		if (login == null) {
-			if (other.login != null)
+			if (other.login != null) {
 				return false;
-		} else if (!login.equals(other.login))
+			}
+		} else if (!login.equals(other.login)) {
 			return false;
+		}
 		return true;
 	}
 
