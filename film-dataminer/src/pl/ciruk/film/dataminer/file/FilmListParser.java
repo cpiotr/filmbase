@@ -27,7 +27,7 @@ public class FilmListParser {
 	
 	public static final String[] MUSIC = { "koncert", "teledysk", "film muzyczny" };
 	public static final String[] CARTOON = { "animacja", "kreskówka" };
-	public static final SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy");
+	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 	
 	private String outputFormat;
 	
@@ -36,7 +36,7 @@ public class FilmListParser {
 	}
 	
 	public FilmListParser(String outputFormat) {
-		this.outputFormat = outputFormat != null ? outputFormat : DEFAULT_OUTPUT;
+		this.outputFormat = outputFormat == null ? DEFAULT_OUTPUT : outputFormat;
 	}
 	
 	public String parse(File file) throws Exception {
@@ -77,8 +77,8 @@ public class FilmListParser {
 					String title = parts[0].trim();
 					String category = (music) ? "music" : (cartoon ? "cartoon" : "film");
 					
-					buffer.append(String.format(outputFormat, title, trimmed, category, sdf.format(fileModificationDate)));
-					buffer.append("\n");
+					buffer.append(String.format(outputFormat, title, trimmed, category, DATE_FORMAT.format(fileModificationDate)));
+					buffer.append('\n');
 				}
 			}
 		}

@@ -138,7 +138,7 @@ public class FilmServiceBean implements FilmServiceLocal {
 			film.setTitle(parts[0]);
 			film.setLabel(parts[1]);
 			film.setType(type);
-			film.setInsertionDate(FilmListParser.sdf.parse(parts[3]));
+			film.setInsertionDate(FilmListParser.DATE_FORMAT.parse(parts[3]));
 			
 			if (!films.contains(film)) {
 				films.add(film);
