@@ -8,5 +8,7 @@
 			<attribute name="owner.project.facets" value="java"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry exported="true" kind="lib" path="junit-4.10.jar"/>
+	<classpathentry exported="true" kind="lib" path="spring-test-3.2.1.RELEASE-javadoc.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
