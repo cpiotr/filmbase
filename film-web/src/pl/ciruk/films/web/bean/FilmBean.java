@@ -17,8 +17,6 @@ import org.apache.log4j.Logger;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
 
-import pl.ciruk.film.dataminer.file.FilmListParser;
-import pl.ciruk.films.datatype.FilmType;
 import pl.ciruk.films.ejb.api.FilmSearchCriteria;
 import pl.ciruk.films.ejb.api.FilmServiceLocal;
 import pl.ciruk.films.entity.Film;
@@ -29,6 +27,7 @@ public class FilmBean {
 	private static Logger LOG = Logger.getLogger(FilmBean.class);
 	
 	private static final String UPLOAD_DIR = "D:\\tmp";
+	
 	@EJB
 	private FilmServiceLocal service;
 	
@@ -45,24 +44,7 @@ public class FilmBean {
 		try {
 			f = createFile(event.getFile());
 			
-			FilmListParser parser = new FilmListParser();
-			String content = parser.parse(f);
-			f.delete();
-			
-			for (String line : content.split("\n")) {
-				System.out.println(line);
-				String[] parts = line.split(FilmListParser.DEFAULT_DELIMITER);
-				if (parts.length == 4) {
-					Film film = new Film();
-					film.setTitle(parts[0]);
-					film.setLabel(parts[1]);
-					film.setType(FilmType.getByLabel(parts[2]));
-					film.setInsertionDate(FilmListParser.sdf.parse(parts[3]));
-					
-					boolean saved = service.save(film);
-					LOG.info("handleFileUpload - saved: " + saved);
-				}
-			}
+			service.updateWithListFile(f);
 			
 			FacesMessage msg = new FacesMessage("Succesful", event.getFile().getFileName() + " is uploaded.");  
 	        FacesContext.getCurrentInstance().addMessage(null, msg);

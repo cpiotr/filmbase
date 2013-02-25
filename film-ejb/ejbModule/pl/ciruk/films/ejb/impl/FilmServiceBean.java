@@ -10,12 +10,14 @@ import javax.persistence.Query;
 
 import org.apache.log4j.Logger;
 
+import pl.ciruk.film.dataminer.domain.FilmDTO;
 import pl.ciruk.film.dataminer.file.FilmListParser;
 import pl.ciruk.film.utils.core.StringHelper;
-import pl.ciruk.films.datatype.FilmType;
+import pl.ciruk.films.adapter.FilmAdapter;
 import pl.ciruk.films.ejb.api.FilmSearchCriteria;
 import pl.ciruk.films.ejb.api.FilmServiceLocal;
 import pl.ciruk.films.entity.Film;
+import pl.ciruk.utils.preconditions.PreconditionsHelper;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -57,10 +59,10 @@ public class FilmServiceBean implements FilmServiceLocal {
 
 	@Override
 	public boolean save(Film film) {
+		Preconditions.checkArgument(film != null, "Film cannot be null");
+		
 		LOG.info("save");
 		LOG.info("save - Film: " + film);
-		
-		Preconditions.checkArgument(film != null, "Film cannot be null");
 		
 		if (!exists(film)) {
 			if (film.getId() != null) {
@@ -74,11 +76,9 @@ public class FilmServiceBean implements FilmServiceLocal {
 	}
 	
 	private boolean exists(Film film) {
-		LOG.info("exists");
+		Preconditions.checkArgument(film != null, PreconditionsHelper.CANT_BE_NULL, "Film");
 		
-		if (film == null) {
-			throw new IllegalArgumentException("Film cannot be null");
-		}
+		LOG.info("exists");
 		
 		boolean result = false;
 		
@@ -95,9 +95,7 @@ public class FilmServiceBean implements FilmServiceLocal {
 
 	@Override
 	public boolean remove(Film film) {
-		if (film == null) {
-			throw new IllegalArgumentException("Film cannot be null");
-		}
+		Preconditions.checkArgument(film != null, PreconditionsHelper.CANT_BE_NULL, "Film");
 		
 		if (film.getId() != null) {
 			em.remove(film);
@@ -108,43 +106,19 @@ public class FilmServiceBean implements FilmServiceLocal {
 
 	@Override
 	public void updateWithListFile(File filmListFile) {
-		if (filmListFile == null || !filmListFile.isFile()) {
-			//TODO: Dodac logowanie
-		}
-		
-		FilmListParser parser = new FilmListParser();
-		try {
-			String content = parser.parse(filmListFile);
-			
-			for (Film film : mapToFilms(content)) {
-				save(film);
+		if (filmListFile != null && filmListFile.isFile()) {
+			FilmListParser parser = new FilmListParser();
+			List<FilmDTO> filmList = parser.parseToList(filmListFile);
+				
+			for (FilmDTO dto : filmList) {
+				try {
+					save(FilmAdapter.fromDTO(dto));
+				} catch (Exception e) {
+					LOG.error("updateWithListFile - An error occurred while saving film: " + dto.getTitle());
+				}
 			}
-		} catch (Exception e) {
-			
+		} else {
+			LOG.error("updateWithListFile - FilmListFile does not exist");
 		}
-	}
-
-	private List<Film> mapToFilms(String csvContent) throws Exception {
-		List<Film> films = Lists.newArrayList();
-    	
-		String[] lines = csvContent.split("\r?\n");
-		for (String line : lines) {
-			
-			
-			String[] parts = line.split("~");
-			FilmType type = FilmType.getByLabel(parts[2]);
-			
-			Film film = new Film();
-			film.setTitle(parts[0]);
-			film.setLabel(parts[1]);
-			film.setType(type);
-			film.setInsertionDate(FilmListParser.DATE_FORMAT.parse(parts[3]));
-			
-			if (!films.contains(film)) {
-				films.add(film);
-			}
-		}
-		
-		return films;
 	}
 }

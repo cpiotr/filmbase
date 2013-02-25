@@ -1,17 +1,17 @@
 package pl.ciruk.film.dataminer.file;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.microsoft.OfficeParser;
-import org.apache.tika.sax.BodyContentHandler;
-import org.xml.sax.ContentHandler;
+
+import pl.ciruk.film.dataminer.domain.FilmCategory;
+import pl.ciruk.film.dataminer.domain.FilmDTO;
+import pl.ciruk.film.utils.core.StringHelper;
+
+import com.google.common.collect.Lists;
 
 public class FilmListParser {
 	private static final Logger LOG = Logger.getLogger(FilmListParser.class);
@@ -25,11 +25,11 @@ public class FilmListParser {
 	/** Domyslny separator danych. */
 	public static final String DEFAULT_DELIMITER = "~";
 	
-	public static final String[] MUSIC = { "koncert", "teledysk", "film muzyczny" };
-	public static final String[] CARTOON = { "animacja", "kreskówka" };
 	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 	
 	private String outputFormat;
+	
+	private ContentExtractor extractor = new ContentExtractor();
 	
 	public FilmListParser() {
 		this(null);
@@ -39,68 +39,53 @@ public class FilmListParser {
 		this.outputFormat = outputFormat == null ? DEFAULT_OUTPUT : outputFormat;
 	}
 	
-	public String parse(File file) throws Exception {
-		String content = getContent(file);
-		return processContent(content, new Date(file.lastModified()));
-	}
-	
-	private String getContent(File file) throws Exception {
-		InputStream input = new FileInputStream(file);
-		ContentHandler textHandler = new BodyContentHandler(-1);
-		Metadata metadata = new Metadata();
-		OfficeParser parser = new OfficeParser();
-		ParseContext context = new ParseContext();
-
-		try {
-			parser.parse(input, textHandler, metadata, context);
-		} finally {
-			if (input != null) {
-				input.close();
-			}
-		}
+	public String parseToString(File file) {
+		String content = extractor.getContent(file);
 		
-		String content = textHandler.toString();
-		return content;
-	}
-	
-	private String processContent(String content, Date fileModificationDate) {
-		String[] lines = content.split("\r?\n");
-		StringBuilder buffer = new StringBuilder();
-		for (String line : lines) {
-			String trimmed = line.trim();
-			if (!trimmed.isEmpty()) {
-				if (trimmed.contains("-") || trimmed.contains("–")) {
-					boolean music = isMusic(trimmed);
-					boolean cartoon = isCartoon(trimmed);
-					
-					String[] parts = trimmed.split("[-–]");
-					String title = parts[0].trim();
-					String category = (music) ? "music" : (cartoon ? "cartoon" : "film");
-					
-					buffer.append(String.format(outputFormat, title, trimmed, category, DATE_FORMAT.format(fileModificationDate)));
-					buffer.append('\n');
-				}
-			}
+		StringBuffer buffer = new StringBuffer();
+		
+		for (FilmDTO dto : getFilms(content, new Date(file.lastModified()))) {
+			buffer.append(String.format(outputFormat, dto.getTitle(), dto.getLabel(), dto.getCategory().name(), DATE_FORMAT.format(dto.getInsertionDate())));
+			buffer.append('\n');
 		}
 		
 		return buffer.toString();
 	}
 	
-	private boolean isMusic(String line) {
-		return containsAny(MUSIC, line);
+	public List<FilmDTO> parseToList(File file) {
+		return getFilms(extractor.getContent(file), new Date(file.lastModified()));
 	}
 	
-	private boolean isCartoon(String line) {
-		return containsAny(CARTOON, line);
-	}
-	
-	private boolean containsAny(String[] keys, String line) {
-		for (String keyword : keys) {
-			if (line.contains(keyword)) {
-				return true;
+	private List<FilmDTO> getFilms(String content, Date fileModificationDate) {
+		String[] lines = content.split("\r?\n");
+		
+		List<FilmDTO> films = Lists.newArrayListWithExpectedSize(lines.length);
+		
+		for (String line : lines) {
+			String trimmed = line.trim();
+			if (!trimmed.isEmpty()) {
+				if (trimmed.contains("-") || trimmed.contains("–")) {
+					
+					String[] parts = trimmed.split("[-–]");
+					String title = parts[0].trim();
+					FilmCategory category = (isMusic(trimmed)) ? FilmCategory.MUSIC : (isCartoon(trimmed) ? FilmCategory.CARTOON : FilmCategory.FILM);
+					
+					films.add(new FilmDTO(title, trimmed, category, fileModificationDate));
+					
+				} else {
+					LOG.debug("processContent - Current line does not contain standard delimiter: " + trimmed);
+				}
 			}
 		}
 		
-		return false;
+		return films;
+	}	
+	
+	private boolean isMusic(String line) {
+		return StringHelper.containsAny(FilmCategory.MUSIC.getSynonyms(), line);
+	}
+	
+	private boolean isCartoon(String line) {
+		return StringHelper.containsAny(FilmCategory.CARTOON.getSynonyms(), line);
 	}
 }
