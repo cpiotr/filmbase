@@ -115,6 +115,26 @@ public class FilmServiceBeanTest {
 		assertFalse(saved);
 	}
 	
+	@Transactional
+	@Test
+	public void shouldRemoveSampleFilm() {
+		Film f = new Film();
+		f.setInsertionDate(new Date());
+		f.setLabel("Testowy film");
+		f.setTitle("Testowy tytuł");
+		f.setType(FilmType.F);
+		
+		boolean saved = service.save(f);
+		assertTrue(saved);
+		
+		boolean removed = service.remove(f);
+		assertTrue(removed);
+		
+		Query query = em.createQuery("select f from Film f where f.title = :title and f.label = :label").setParameter("title", f.getTitle()).setParameter("label", f.getLabel());
+		List<Film> films = query.getResultList();
+		assertTrue(films.isEmpty());
+	}
+	
 	class EntityComparator implements Comparator<BaseEntity> {
 
 		@Override

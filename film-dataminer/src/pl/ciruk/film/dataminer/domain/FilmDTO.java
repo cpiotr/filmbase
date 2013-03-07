@@ -2,6 +2,8 @@ package pl.ciruk.film.dataminer.domain;
 
 import java.util.Date;
 
+import com.google.common.base.Objects.ToStringHelper;
+
 public class FilmDTO {
 	private String title;
 	
@@ -16,6 +18,11 @@ public class FilmDTO {
 		this.label = label;
 		this.category = category;
 		this.insertionDate = insertionDate;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("(%s, %s)", title, label);
 	}
 	
 	public String getTitle() {

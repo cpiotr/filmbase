@@ -88,4 +88,10 @@ public class FilmListParser {
 	private boolean isCartoon(String line) {
 		return StringHelper.containsAny(FilmCategory.CARTOON.getSynonyms(), line);
 	}
+	
+	public static void main(String[] args) {
+		FilmListParser parser = new  FilmListParser();
+		List<FilmDTO> films = parser.parseToList(new File("C:\\Users\\Piotrek\\Desktop\\1.doc"));
+		System.out.println(films);
+	}
 }

@@ -5,6 +5,7 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -34,8 +35,10 @@ public class FilmBean {
 	private List<Film> films;
 	
 	private String title;
+	
+	private Date insertionDate;
 
-	private String text = "Button";
+	private String text = "Szukaj";
 	
 	public void handleFileUpload(FileUploadEvent event) {  
         LOG.info("handleFileUpload");
@@ -98,6 +101,7 @@ public class FilmBean {
 	public String search() {
 		FilmSearchCriteria criteria = new FilmSearchCriteria();
 		criteria.setTitle(title);
+		criteria.setAdditionDate(insertionDate);
 		films = service.find(criteria); 
 		return null;
 	}
@@ -116,5 +120,13 @@ public class FilmBean {
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+
+	public Date getInsertionDate() {
+		return insertionDate;
+	}
+
+	public void setInsertionDate(Date insertionDate) {
+		this.insertionDate = insertionDate;
 	}
 }

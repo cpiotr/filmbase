@@ -37,13 +37,20 @@ public class FilmServiceBean implements FilmServiceLocal {
 		queryBuilder.append("select f from ").append(Film.class.getSimpleName()).append(" f ");
 		if (criteria != null && !criteria.isEmpty()) {
 			queryBuilder.append("where ");
+			
 			if (StringHelper.isNotEmpty(criteria.getTitle())) {
 				queryBuilder.append("f.title like ?" + (queryParams.size() + 1) + " ");
 				queryParams.add(criteria.getTitle() + "%");
 			}
+			
 			if (!criteria.getTypes().isEmpty()) {
 				queryBuilder.append("f.type in ?" + (queryParams.size() + 1) + " ");
 				queryParams.add(criteria.getTypes());
+			}
+			
+			if (criteria.getAdditionDate() != null) {
+				queryBuilder.append("f.insertionDate >= ?" + (queryParams.size() + 1) + " ");
+				queryParams.add(criteria.getAdditionDate());
 			}
 		}
 		queryBuilder.append("order by f.title ");

@@ -6,8 +6,16 @@
 </h:head>
 <h:body>
 	<h:form id="mainForm">
-		<p:inputText value="#{filmBean.title}"/>
-		<p:commandButton value="#{filmBean.text}" action="#{filmBean.search}" ajax="false" />
+		<h:panelGrid columns="2">
+			<h:outputLabel for="searchFormTitle" value="Tytul" />
+			<p:inputText id="searchFormTitle" value="#{filmBean.title}"/>
+			
+			<h:outputLabel for="searchFormDate" value="Filmy dodane później niż" />
+			<p:calendar id="searchFormDate" value="#{filmBean.insertionDate}"/>
+			
+			<p:commandButton value="#{filmBean.text}" action="#{filmBean.search}" ajax="false" />
+		</h:panelGrid>
+		
 	</h:form>
 	<p:dataTable value="#{filmBean.films}" var="film" rendered="#{not empty filmBean.films}">
 		<p:column headerText="Tytul">#{film.title}</p:column>
