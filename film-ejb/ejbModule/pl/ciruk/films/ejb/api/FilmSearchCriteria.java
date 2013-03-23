@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import pl.ciruk.film.utils.core.StringHelper;
 import pl.ciruk.films.datatype.FilmSortColumn;
 import pl.ciruk.films.datatype.FilmType;
@@ -21,6 +23,11 @@ public class FilmSearchCriteria implements Serializable {
 	private Date additionDate;
 	
 	private FilmSortColumn sortColumn = FilmSortColumn.TITLE;
+	
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
+	}
 	
 	public boolean isEmpty() {
 		return StringHelper.isEmpty(title) && getTypes().isEmpty() && additionDate == null;

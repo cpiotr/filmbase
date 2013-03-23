@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -55,7 +56,8 @@ public class FilmServiceBeanTest {
 		List<Film> expected = em.createQuery("select f from Film f where f.title like 'A%'").getResultList();
 		Collections.sort(expected, cmp);
 		
-		criteria.setTitle("a");
+		String titlePrefix = "a";
+		criteria.setTitle(titlePrefix);
 		List<Film> films = service.find(criteria);
 		assertNotNull(films);
 		

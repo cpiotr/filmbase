@@ -1,132 +1,83 @@
 package pl.ciruk.films.web.bean;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.Date;
-import java.util.List;
+import java.io.Serializable;
 
 import javax.ejb.EJB;
-import javax.faces.application.FacesMessage;
-import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
-import javax.faces.context.FacesContext;
+import javax.enterprise.context.SessionScoped;
+import javax.inject.Inject;
+import javax.inject.Named;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.log4j.Logger;
-import org.primefaces.event.FileUploadEvent;
-import org.primefaces.model.UploadedFile;
 
-import pl.ciruk.films.ejb.api.FilmSearchCriteria;
+import pl.ciruk.film.dataminer.web.FilmwebDescription;
 import pl.ciruk.films.ejb.api.FilmServiceLocal;
 import pl.ciruk.films.entity.Film;
 
-@ManagedBean(name="filmBean")
+@Named(value="filmBean")
 @SessionScoped
-public class FilmBean {
+public class FilmBean implements Serializable {
+	/** */
+	private static final long serialVersionUID = 3343180246659294215L;
+
 	private static Logger LOG = Logger.getLogger(FilmBean.class);
-	
-	private static final String UPLOAD_DIR = "D:\\tmp";
 	
 	@EJB
 	private FilmServiceLocal service;
 	
-	private List<Film> films;
+	@Inject
+	private FilmListBean filmList;
 	
-	private String title;
+	private Film film;
 	
-	private Date insertionDate;
-
-	private String text = "Szukaj";
+	private FilmwebDescription description;
 	
-	public void handleFileUpload(FileUploadEvent event) {  
-        LOG.info("handleFileUpload");
+	public void remove() {
+		LOG.info("remove");
+		LOG.debug("remove - Film: " + getFilm());
 		
-		File f = null;
-		try {
-			f = createFile(event.getFile());
-			
-			service.updateWithListFile(f);
-			
-			FacesMessage msg = new FacesMessage("Succesful", event.getFile().getFileName() + " is uploaded.");  
-	        FacesContext.getCurrentInstance().addMessage(null, msg);
-		} catch (Exception e) {
-			LOG.error("handleFileUpload", e);
+		if (getFilm() != null) {
+			service.remove(getFilm());
+			filmList.refresh();
 		}
-    }
+	}
 	
-	private File createFile(UploadedFile uploadedFile) throws IOException {
-		LOG.info("createFile");
+	public void save() {
+		LOG.info("save");
+		LOG.debug("save - Film: " + getFilm());
 		
-		File file = null;
-		
-		if (uploadedFile != null) {
-			File dir = new File(UPLOAD_DIR);
-			if (!dir.isDirectory()) {
-				dir.mkdirs();
-			}
-			file = new File(UPLOAD_DIR, uploadedFile.getFileName());
-			
-			BufferedOutputStream outputStream = null;
-			BufferedInputStream inputStream = null;
-			try {
-				inputStream = new BufferedInputStream(uploadedFile.getInputstream());
-				outputStream = new BufferedOutputStream(new FileOutputStream(file));
-				
-				byte[] buffer = new byte[1024];
-				int length = -1;
-				while ((length = inputStream.read(buffer)) > -1) {
-					outputStream.write(buffer, 0, length);
-				}
-				
-				outputStream.flush();
-			} finally {
-				if (inputStream != null) {
-					inputStream.close();
-				}
-				if (outputStream != null) {
-					outputStream.close();
-				}
-			}
+		if (getFilm() != null) {
+			service.save(getFilm());
+			filmList.refresh();
 		}
+	}
+	
+	public void view() {
+		LOG.info("view");
+		LOG.info("view - Film: " + getFilm());
 		
-		return file;
-	}
-	
-	public String getText() {
-		return text;
-	}
-	
-	public String search() {
-		FilmSearchCriteria criteria = new FilmSearchCriteria();
-		criteria.setTitle(title);
-		criteria.setAdditionDate(insertionDate);
-		films = service.find(criteria); 
-		return null;
-	}
-	
-	public List<Film> getFilms() {
-		return films;
+		if (getFilm() != null) {
+			setDescription(service.getDescrption(getFilm()));
+			LOG.info(ToStringBuilder.reflectionToString(getDescription()));
+		} else {
+			LOG.warn("view - No film was selected");
+		}
 	}
 
-	public void setFilms(List<Film> films) {
-		this.films = films;
+	public Film getFilm() {
+		return film;
 	}
 
-	public String getTitle() {
-		return title;
+	public void setFilm(Film film) {
+		this.film = film;
 	}
 
-	public void setTitle(String title) {
-		this.title = title;
+	public FilmwebDescription getDescription() {
+		return description;
 	}
 
-	public Date getInsertionDate() {
-		return insertionDate;
+	public void setDescription(FilmwebDescription description) {
+		this.description = description;
 	}
 
-	public void setInsertionDate(Date insertionDate) {
-		this.insertionDate = insertionDate;
-	}
 }

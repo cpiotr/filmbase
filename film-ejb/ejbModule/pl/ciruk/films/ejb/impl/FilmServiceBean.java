@@ -12,6 +12,8 @@ import org.apache.log4j.Logger;
 
 import pl.ciruk.film.dataminer.domain.FilmDTO;
 import pl.ciruk.film.dataminer.file.FilmListParser;
+import pl.ciruk.film.dataminer.web.FilmwebDescription;
+import pl.ciruk.film.dataminer.web.FilmwebParser;
 import pl.ciruk.film.utils.core.StringHelper;
 import pl.ciruk.films.adapter.FilmAdapter;
 import pl.ciruk.films.ejb.api.FilmSearchCriteria;
@@ -29,27 +31,32 @@ public class FilmServiceBean implements FilmServiceLocal {
 	@PersistenceContext
 	private EntityManager em;
 	
+	private FilmwebParser filmwebParser = new FilmwebParser();
+	
 	@Override
 	@SuppressWarnings("unchecked")
 	public List<Film> find(FilmSearchCriteria criteria) {
+		LOG.info("find");
+		LOG.debug("find - Criteria: " + criteria);
+		
 		StringBuilder queryBuilder = new StringBuilder();
 		List<Object> queryParams = Lists.newArrayList();
 		queryBuilder.append("select f from ").append(Film.class.getSimpleName()).append(" f ");
 		if (criteria != null && !criteria.isEmpty()) {
-			queryBuilder.append("where ");
+			queryBuilder.append("where 1=1");
 			
 			if (StringHelper.isNotEmpty(criteria.getTitle())) {
-				queryBuilder.append("f.title like ?" + (queryParams.size() + 1) + " ");
+				queryBuilder.append("and f.title like ?" + (queryParams.size() + 1) + " ");
 				queryParams.add(criteria.getTitle() + "%");
 			}
 			
 			if (!criteria.getTypes().isEmpty()) {
-				queryBuilder.append("f.type in ?" + (queryParams.size() + 1) + " ");
+				queryBuilder.append("and f.type in ?" + (queryParams.size() + 1) + " ");
 				queryParams.add(criteria.getTypes());
 			}
 			
 			if (criteria.getAdditionDate() != null) {
-				queryBuilder.append("f.insertionDate >= ?" + (queryParams.size() + 1) + " ");
+				queryBuilder.append("and f.insertionDate >= ?" + (queryParams.size() + 1) + " ");
 				queryParams.add(criteria.getAdditionDate());
 			}
 		}
@@ -71,12 +78,12 @@ public class FilmServiceBean implements FilmServiceLocal {
 		LOG.info("save");
 		LOG.info("save - Film: " + film);
 		
-		if (!exists(film)) {
-			if (film.getId() != null) {
-				em.merge(film);
-			} else {
-				em.persist(film);
-			}
+		if (film.getId() != null) {
+			em.merge(film);
+		} else if (!exists(film)) {
+			em.persist(film);
+		} else {
+			LOG.info("Film already exists");
 		}
 		
 		return film.getId() != null;
@@ -85,17 +92,11 @@ public class FilmServiceBean implements FilmServiceLocal {
 	private boolean exists(Film film) {
 		Preconditions.checkArgument(film != null, PreconditionsHelper.CANT_BE_NULL, "Film");
 		
-		LOG.info("exists");
-		
 		boolean result = false;
 		
-		if (film.getId() != null) {
-			result = true;
-		} else {
-			Query query = em.createNamedQuery(Film.QUERY_GET_FILM).setParameter("title", film.getTitle()).setParameter("label", film.getLabel());
-			List<Film> films = query.getResultList();
-			result = !films.isEmpty();
-		}
+		Query query = em.createNamedQuery(Film.QUERY_GET_FILM).setParameter("title", film.getTitle()).setParameter("label", film.getLabel());
+		List<Film> films = query.getResultList();
+		result = !films.isEmpty();
 		
 		return result;
 	}
@@ -104,11 +105,13 @@ public class FilmServiceBean implements FilmServiceLocal {
 	public boolean remove(Film film) {
 		Preconditions.checkArgument(film != null, PreconditionsHelper.CANT_BE_NULL, "Film");
 		
+		boolean removed = false;
 		if (film.getId() != null) {
-			em.remove(film);
+			em.remove(em.find(Film.class, film.getId()));
+			removed = em.find(Film.class, film.getId()) == null;
 		}
 		
-		return em.find(Film.class, film.getId()) == null;
+		return removed;
 	}
 
 	@Override
@@ -128,4 +131,35 @@ public class FilmServiceBean implements FilmServiceLocal {
 			LOG.error("updateWithListFile - FilmListFile does not exist");
 		}
 	}
+
+	@Override
+	public FilmwebDescription getDescrption(Film film) {
+		Preconditions.checkArgument(film != null, PreconditionsHelper.CANT_BE_NULL, "Film");
+
+		FilmwebDescription description = null;
+		
+		if (StringHelper.isNotEmpty(film.getLabel())) {
+			int from = film.getLabel().lastIndexOf("(") + 1;
+			if (from > -1 && from < film.getLabel().length()-1) {
+				int to = film.getLabel().lastIndexOf(")");
+				if (to < from) {
+					to = film.getLabel().length();
+				}
+				List<String> actors = Lists.newArrayList(film.getLabel().substring(from, to).split(","));
+				description = filmwebParser.find(film.getTitle(), actors);
+			}
+		}
+		
+		return description;
+	}
+	
+	public static void main(String[] args) {
+		String text = "text elo 220 (fdf) (ADam malysz)";
+		Film f = new Film();
+		f.setLabel(text);
+		FilmServiceBean bean = new FilmServiceBean();
+		FilmwebDescription d = bean.getDescrption(f);
+		System.out.println(d.getTitle());
+	}
+	
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import pl.ciruk.film.dataminer.web.FilmwebDescription;
 import pl.ciruk.films.entity.Film;
 
 /**
@@ -45,4 +46,11 @@ public interface FilmServiceLocal {
 	 * @param filmListFile
 	 */
 	void updateWithListFile(File filmListFile);
+	
+	/**
+	 * Pobiera dane dotyczace wybranego filmu z portalu Filmweb.
+	 * @param film
+	 * @return
+	 */
+	FilmwebDescription getDescrption(Film film);
 }
