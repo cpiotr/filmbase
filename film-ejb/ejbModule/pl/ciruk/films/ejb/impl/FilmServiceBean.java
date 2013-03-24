@@ -152,14 +152,4 @@ public class FilmServiceBean implements FilmServiceLocal {
 		
 		return description;
 	}
-	
-	public static void main(String[] args) {
-		String text = "text elo 220 (fdf) (ADam malysz)";
-		Film f = new Film();
-		f.setLabel(text);
-		FilmServiceBean bean = new FilmServiceBean();
-		FilmwebDescription d = bean.getDescrption(f);
-		System.out.println(d.getTitle());
-	}
-	
 }

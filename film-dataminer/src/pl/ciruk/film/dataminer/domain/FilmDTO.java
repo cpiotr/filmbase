@@ -2,8 +2,6 @@ package pl.ciruk.film.dataminer.domain;
 
 import java.util.Date;
 
-import com.google.common.base.Objects.ToStringHelper;
-
 public class FilmDTO {
 	private String title;
 	

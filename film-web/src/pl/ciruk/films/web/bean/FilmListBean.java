@@ -29,7 +29,7 @@ public class FilmListBean implements Serializable {
 	/** */
 	private static final long serialVersionUID = 371728849250989646L;
 
-	private static Logger LOG = Logger.getLogger(FilmListBean.class);
+	private static final Logger LOG = Logger.getLogger(FilmListBean.class);
 	
 	private static final String UPLOAD_DIR = "D:\\tmp";
 	

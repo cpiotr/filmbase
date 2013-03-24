@@ -1,6 +1,7 @@
 package pl.ciruk.film.dataminer.file;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -25,7 +26,7 @@ public class FilmListParser {
 	/** Domyslny separator danych. */
 	public static final String DEFAULT_DELIMITER = "~";
 	
-	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
+	public static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy");
 	
 	private String outputFormat;
 	
@@ -87,11 +88,5 @@ public class FilmListParser {
 	
 	private boolean isCartoon(String line) {
 		return StringHelper.containsAny(FilmCategory.CARTOON.getSynonyms(), line);
-	}
-	
-	public static void main(String[] args) {
-		FilmListParser parser = new  FilmListParser();
-		List<FilmDTO> films = parser.parseToList(new File("C:\\Users\\Piotrek\\Desktop\\1.doc"));
-		System.out.println(films);
 	}
 }

@@ -7,7 +7,6 @@ import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.log4j.Logger;
 
 import pl.ciruk.film.dataminer.web.FilmwebDescription;
@@ -20,7 +19,7 @@ public class FilmBean implements Serializable {
 	/** */
 	private static final long serialVersionUID = 3343180246659294215L;
 
-	private static Logger LOG = Logger.getLogger(FilmBean.class);
+	private static final Logger LOG = Logger.getLogger(FilmBean.class);
 	
 	@EJB
 	private FilmServiceLocal service;
@@ -34,31 +33,34 @@ public class FilmBean implements Serializable {
 	
 	public void remove() {
 		LOG.info("remove");
-		LOG.debug("remove - Film: " + getFilm());
+		LOG.debug("remove - Film: " + film);
 		
-		if (getFilm() != null) {
+		if (film != null) {
 			service.remove(getFilm());
 			filmList.refresh();
+		} else {
+			LOG.warn("remove - Film is null");
 		}
 	}
 	
 	public void save() {
 		LOG.info("save");
-		LOG.debug("save - Film: " + getFilm());
+		LOG.debug("save - Film: " + film);
 		
-		if (getFilm() != null) {
+		if (film != null) {
 			service.save(getFilm());
 			filmList.refresh();
+		} else {
+			LOG.warn("save - Film is null");
 		}
 	}
 	
 	public void view() {
 		LOG.info("view");
-		LOG.info("view - Film: " + getFilm());
+		LOG.info("view - Film: " + film);
 		
-		if (getFilm() != null) {
-			setDescription(service.getDescrption(getFilm()));
-			LOG.info(ToStringBuilder.reflectionToString(getDescription()));
+		if (film != null) {
+			setDescription(service.getDescrption(film));
 		} else {
 			LOG.warn("view - No film was selected");
 		}

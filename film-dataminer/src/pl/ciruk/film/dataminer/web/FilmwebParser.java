@@ -150,10 +150,4 @@ public class FilmwebParser {
 		}
 		return result;
 	}
-	
-	public static void main(String[] args) {
-		FilmwebParser parser = new FilmwebParser();
-		FilmwebDescription d = parser.find("Zaraz wracam", Lists.newArrayList(" Kim Basinger"));
-		System.out.println(d.getTitle());
-	}
 }
