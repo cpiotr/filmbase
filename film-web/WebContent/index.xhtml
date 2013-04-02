@@ -39,7 +39,7 @@
 			modal="true">
 
 			<h:panelGrid id="display" columns="2" cellpadding="4"
-				style="margin:0 auto;" rendered="#{filmBean.description != null}">
+				style="margin:0 auto;">
 
 				<f:facet name="header">  
                 Detale 
@@ -51,7 +51,9 @@
 				</h:outputLink>
 
 				<h:outputText value="#{msg['film.score']}" />
-				<h:outputText value="#{filmBean.description.score}" style="font-weight:bold" />
+				<h:outputText value="#{filmBean.description.score}" style="font-weight:bold">
+					<f:convertNumber type="percent" maxFractionDigits="2" />
+				</h:outputText>
 			</h:panelGrid>
 		</p:dialog>
 

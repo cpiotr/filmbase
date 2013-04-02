@@ -39,8 +39,8 @@ public final class StringHelper {
 		Preconditions.checkArgument(first != null, PreconditionsHelper.CANT_BE_NULL, "First string");
 		Preconditions.checkArgument(second != null, PreconditionsHelper.CANT_BE_NULL, "Second string");
 		
-		String trimmedFirst = first.trim();
-		String trimmedSecond = second.trim();
+		String trimmedFirst = first.trim().toLowerCase();
+		String trimmedSecond = second.trim().toLowerCase();
 		
 		return StringUtils.getLevenshteinDistance(trimmedFirst, trimmedSecond) <= Math.max(trimmedFirst.length(), trimmedSecond.length()) * 0.1;
 	}
@@ -53,6 +53,26 @@ public final class StringHelper {
 		for (String e : elements) {
 			if (fuzzyEquals(element, e)) {
 				contains = true;
+				break;
+			}
+		}
+		return contains;
+	}
+	
+	/**
+	 * Checks whether every element from {@code patterns} can be found within {@code elements} list.
+	 * @param elements
+	 * @param patterns
+	 * @return
+	 */
+	public static boolean fuzzyContainsAll(List<String> elements, List<String> patterns) {
+		Preconditions.checkArgument(elements != null, PreconditionsHelper.CANT_BE_NULL, "Elements");
+		Preconditions.checkArgument(patterns != null, PreconditionsHelper.CANT_BE_NULL, "Patterns");
+		
+		boolean contains = true;
+		for (String e : patterns) {
+			if (!fuzzyContains(elements, e)) {
+				contains = false;
 				break;
 			}
 		}

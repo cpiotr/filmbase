@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -24,13 +25,20 @@ import com.google.common.collect.Lists;
 public class FilmwebParser {
 	private static final String SEARCH_BY_TITLE_URL_FORMAT = "http://www.filmweb.pl/search/film?q=%s";
 	
+	private static final String FILM_DESC_CSS_CLASS = ".hitDescWrapper";
+	
 	private static final Log LOG = LogFactory.getLog(FilmwebParser.class);
 	
-	public FilmwebDescription find(String title, List<String> actors) {
-		LOG.info("find");
-		LOG.debug(String.format("find - Title: %s; Actors: %s", title, actors));
+	/**
+	 * Finds films' descriptions for given title.
+	 * @param title
+	 * @return
+	 */
+	public List<FilmwebDescription> find(String title) {
+		LOG.info("find(title)");
+		LOG.info(String.format("find - Title: %s", title));
 		
-		FilmwebDescription result = null;
+		List<FilmwebDescription> descriptions = Lists.newArrayList();
 		
 		if (StringHelper.isNotEmpty(title)) {
 			try {
@@ -39,17 +47,54 @@ public class FilmwebParser {
 				Document doc = Jsoup.connect(url).get();
 				
 				// Kontener opisu filmu 
-				Elements foundDescriptions = doc.select(".hitDescWrapper");
-				foundDescLoop: for (Element description : foundDescriptions) {
+				Elements foundDescriptions = doc.select(FILM_DESC_CSS_CLASS);
+				for (Element description : foundDescriptions) {
 					if (StringHelper.fuzzyEquals(getShortTitle(description), title)) {
-						result = mapDescription(description);
+						FilmwebDescription filmwebDescription = mapDescription(description);
+						descriptions.add(filmwebDescription);
+					}
+				}
+			} catch (IOException e) {
+				LOG.error("find - Error while retrieving Filmweb page", e);
+			}
+		} else {
+			LOG.warn("find - Title is empty");
+		}
+		
+		return descriptions;
+	}
+	
+	/**
+	 * Finds films' descriptions for given title and actors. <br/>
+	 * Actors is a list of names in format: {@code firstname lastname}. <br/>
+	 * If actors list is empty, search is performed by title only.
+	 * @param title
+	 * @param actors
+	 * @return
+	 */
+	public List<FilmwebDescription> find(String title, List<String> actors) {
+		LOG.info("find");
+		LOG.info(String.format("find - Title: %s; Actors: %s", title, actors));
+		
+		List<FilmwebDescription> descriptions = Lists.newArrayList();
+		
+		if (actors == null || actors.isEmpty()) {
+			descriptions = find(title);
+		} else if (StringHelper.isNotEmpty(title)) {
+			try {
+				// Pobieranie strony z wynikami wyszukiwania
+				String url = String.format(SEARCH_BY_TITLE_URL_FORMAT, URLEncoder.encode(title, "UTF-8"));
+				Document searchResultPage = Jsoup.connect(url).get();
+				
+				// Kontener opisu filmu 
+				Elements foundDescriptions = searchResultPage.select(FILM_DESC_CSS_CLASS);
+				for (Element description : foundDescriptions) {
+					if (StringHelper.fuzzyContains(getTitleChunks(description), title)) {
+						Document filmDetailsPage = Jsoup.connect(getURL(description)).get();
 						
-						List<String> filmwebActors = getActors(description);
-						for (String actor : filmwebActors) {
-							if (StringHelper.fuzzyContains(actors, actor)) {
-								result = mapDescription(description);
-								break foundDescLoop;
-							}
+						List<String> filmwebActors = getActors(filmDetailsPage);
+						if (StringHelper.fuzzyContainsAll(filmwebActors, actors)) {
+							descriptions.add(mapDescription(description));
 						}
 					}
 				}
@@ -60,7 +105,7 @@ public class FilmwebParser {
 			LOG.warn("parse - Title is empty");
 		}
 		
-		return result;
+		return descriptions;
 	}
 	
 	private FilmwebDescription mapDescription(Element description) {
@@ -78,8 +123,8 @@ public class FilmwebParser {
 		
 		List<String> actors = Lists.newArrayListWithExpectedSize(description.childNodeSize());
 		
-		// Aktorzy przechowywani sa w postaci elementow listy nieuporzadkowanej
-		for (Element filmwebActor : description.select(".filmInfo li")) {
+		// Aktorzy pobierani sa ze strony ze szczegolowym opisem filmu, nie zas z wynikow wyszukiwania
+		for (Element filmwebActor : description.select(".filmCastBox .personName")) {
 			actors.add(filmwebActor.text());
 		}
 		return actors;
@@ -88,12 +133,29 @@ public class FilmwebParser {
 	private String getShortTitle(Element description) {
 		Preconditions.checkArgument(description != null, PreconditionsHelper.CANT_BE_NULL, "FilmDescription element");
 		
+		List<String> titleChunks = getTitleChunks(description);
+		
+		return titleChunks.isEmpty() ? null : titleChunks.get(0);
+	}
+	
+	/**
+	 * Retrieves all parts of filmweb title. <br/>
+	 * Film's title is presented in format: {@code POLISH TITLE / ORIGINAL TITLE (YEAR)}.
+	 * @param description
+	 * @return
+	 */
+	private List<String> getTitleChunks(Element description) {
+		Preconditions.checkArgument(description != null, PreconditionsHelper.CANT_BE_NULL, "FilmDescription element");
+		
+		List<String> result = Collections.emptyList();
+		
 		String title = getFullTitle(description);
 		if (StringHelper.isNotEmpty(title)) {
 			String[] parts = title.split("[\\)\\(/\\\\]");
-			title = parts[0];
+			result = Lists.newArrayList(parts);
 		}
-		return title;
+		
+		return result;
 	}
 	
 	private String getFullTitle(Element description) {

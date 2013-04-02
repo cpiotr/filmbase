@@ -1,6 +1,7 @@
 package pl.ciruk.films.ejb.impl;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 import javax.ejb.Stateless;
@@ -139,17 +140,40 @@ public class FilmServiceBean implements FilmServiceLocal {
 		FilmwebDescription description = null;
 		
 		if (StringHelper.isNotEmpty(film.getLabel())) {
-			int from = film.getLabel().lastIndexOf("(") + 1;
-			if (from > -1 && from < film.getLabel().length()-1) {
-				int to = film.getLabel().lastIndexOf(")");
-				if (to < from) {
-					to = film.getLabel().length();
-				}
-				List<String> actors = Lists.newArrayList(film.getLabel().substring(from, to).split(","));
-				description = filmwebParser.find(film.getTitle(), actors);
+			List<FilmwebDescription> filmwebDescriptions = null;
+			
+			List<String> actors = retrieveActors(film);
+			if (actors.isEmpty()) {
+				filmwebDescriptions = filmwebParser.find(film.getTitle());
+			} else {
+				filmwebDescriptions = filmwebParser.find(film.getTitle(), actors);
+			}
+			
+			LOG.debug("getDescription - Result: " + filmwebDescriptions);
+			if (!filmwebDescriptions.isEmpty()) {
+				description = filmwebDescriptions.get(0);
 			}
 		}
 		
 		return description;
+	}
+	
+	private List<String> retrieveActors(Film film) {
+		Preconditions.checkArgument(film != null, PreconditionsHelper.CANT_BE_NULL, "Film");
+		
+		List<String> actors = null;
+		
+		int from = film.getLabel().lastIndexOf("(") + 1;
+		if (from > 0 && from < film.getLabel().length()-1) {
+			int to = film.getLabel().lastIndexOf(")");
+			if (to < from) {
+				to = film.getLabel().length();
+			}
+			actors = Lists.newArrayList(film.getLabel().substring(from, to).split(","));
+		} else {
+			actors = Collections.emptyList();
+		}
+		
+		return actors;
 	}
 }
