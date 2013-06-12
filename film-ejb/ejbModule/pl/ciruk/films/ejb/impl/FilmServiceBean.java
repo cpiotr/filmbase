@@ -67,8 +67,6 @@ public class FilmServiceBean implements FilmServiceLocal {
 			query.setParameter(i+1, queryParams.get(i));
 		}
 		
-		System.out.println(queryBuilder.toString());
-		
 		return query.getResultList();
 	}
 
